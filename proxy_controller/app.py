@@ -8,8 +8,8 @@ app = Flask(__name__)
 client = docker.DockerClient(base_url='unix://var/run/docker.sock')
 
 # Path to the toggle file
-TOGGLE_FILE = "/etc/squid/block_toggle"
-PROXY_CONTAINER_NAME = "squid_proxy_container"  # Change this to match your container name
+TOGGLE_FILE = "toggle/BLOCK_WEBSITE"
+PROXY_CONTAINER_NAME = "proxy"  # Change this to match your container name
 
 @app.route('/restart', methods=['GET'])
 def restart_proxy():
