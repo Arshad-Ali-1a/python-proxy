@@ -241,8 +241,8 @@ class ProxyDirect(object):
     async def open_connection(self, host, port, local_addr, lbind, timeout=SOCKET_TIMEOUT):
         print('open_connection direct', host, port, local_addr, lbind, timeout, flush=True) #!! test
         if "googlevideo.com" in host:#!! test
-            print("XXX--NOT BLOCKED--XXX", flush=True)#!! test
-            # raise Exception('BLOCKED')#!! test
+            print("XXX--BLOCKED--XXX", flush=True)#!! test
+            raise Exception('BLOCKED')#!! test
         try:
             local_addr = local_addr if self.lbind == 'in' else (self.lbind, 0) if self.lbind else \
                          local_addr if lbind == 'in' else (lbind, 0) if lbind else None
