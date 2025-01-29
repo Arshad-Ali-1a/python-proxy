@@ -1,0 +1,20 @@
+version: "3"
+services:
+  proxy:
+    image: curiouschamp/proxy
+    container_name: proxy
+    volumes:
+      - ./toggle:/app/toggle
+    ports:
+      - "9001:9001"
+    restart: always
+
+  proxy_control_service:
+    image: curiouschamp/proxy_controller
+    container_name: proxy_controller
+    volumes:
+      - ./toggle:/app/toggle
+      - /var/run/docker.sock:/var/run/docker.sock # Allow API to restart Squid
+    ports:
+      - "9002:9002"
+    restart: always
