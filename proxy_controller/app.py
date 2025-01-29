@@ -11,6 +11,7 @@ client = docker.DockerClient(base_url='unix://var/run/docker.sock')
 TOGGLE_FILE = "/etc/squid/block_toggle"
 PROXY_CONTAINER_NAME = "squid_proxy_container"  # Change this to match your container name
 
+@app.route('/restart', methods=['GET'])
 def restart_proxy():
     """Restart the Squid proxy container to apply changes."""
     try:
@@ -27,14 +28,14 @@ def get_status():
     else:
         return jsonify({"status": "non-blocking"})
 
-@app.route('/block', methods=['POST'])
+@app.route('/block', methods=['GET'])
 def enable_blocking():
     """Enable blocking mode."""
     open(TOGGLE_FILE, 'w').close()  # Create the toggle file
     restart_proxy()
     return jsonify({"message": "Blocking enabled", "status": "blocking"})
 
-@app.route('/unblock', methods=['POST'])
+@app.route('/unblock', methods=['GET'])
 def disable_blocking():
     """Disable blocking mode."""
     if os.path.exists(TOGGLE_FILE):
