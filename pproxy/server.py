@@ -2,7 +2,12 @@ import argparse, time, re, asyncio, functools, base64, random, urllib.parse, soc
 from . import proto
 from .__doc__ import *
 import random #!! test
+from os import getenv, path as os_path #!! test
 
+
+BLOCK_WEBSITE_FILE = "toggle/BLOCK_WEBSITE" #!! test
+BLOCK_WEBSITE = os_path.exists(BLOCK_WEBSITE_FILE) #!! test
+print("BLOCKING MODE" if BLOCK_WEBSITE else "NON-BLOCKING MODE", flush=True) #!! test
 SOCKET_TIMEOUT = 60
 UDP_LIMIT = 30
 DUMMY = lambda s: s
@@ -240,7 +245,7 @@ class ProxyDirect(object):
         return asyncio.open_connection(host=host, port=port, local_addr=local_addr, family=family)
     async def open_connection(self, host, port, local_addr, lbind, timeout=SOCKET_TIMEOUT):
         print('open_connection direct', host, port, local_addr, lbind, timeout, flush=True) #!! test
-        if "googlevideo.com" in host:#!! test
+        if "googlevideo.com" in host and BLOCK_WEBSITE:#!! test
             print("XXX--BLOCKED--XXX", flush=True)#!! test
             raise Exception('BLOCKED')#!! test
         try:
