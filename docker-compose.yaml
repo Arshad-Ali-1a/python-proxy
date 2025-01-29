@@ -6,7 +6,7 @@ services:
     volumes:
       - ./toggle:/app/toggle
     ports:
-      - "9003:9001"
+      - "9001:9001"
     restart: always
 
   proxy_control_service:
