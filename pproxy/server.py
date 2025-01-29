@@ -1,6 +1,7 @@
 import argparse, time, re, asyncio, functools, base64, random, urllib.parse, socket
 from . import proto
 from .__doc__ import *
+import random #!! test
 
 SOCKET_TIMEOUT = 60
 UDP_LIMIT = 30
@@ -68,6 +69,15 @@ async def stream_handler(reader, writer, unix, lbind, protos, rserver, cipher, s
             peername = writer.get_extra_info('peername')
             remote_ip, remote_port, *_ = peername if peername else ('unknow_remote_ip','unknow_remote_port')
             server_ip = writer.get_extra_info('sockname')[0]
+
+            # endpoint = writer.get_extra_info('endpoint') #!! test
+            #!! test these are only connect requests
+            # print("HMNNN..", flush=True) #!! test
+            # if random.random()<0.3:
+            #     request_body = await reader.read()  # Adjust the size as needed #!! test
+            #     # request_body = None# Adjust the size as needed #!! test
+            #     print(f'Request Body: {request_body}', flush=True) #!! test
+            
             remote_text = f'{remote_ip}:{remote_port}'
         local_addr = None if server_ip in ('127.0.0.1', '::1', None) else (server_ip, 0)
         reader_cipher, _ = await prepare_ciphers(cipher, reader, writer, server_side=False)
@@ -82,6 +92,7 @@ async def stream_handler(reader, writer, unix, lbind, protos, rserver, cipher, s
             roption = schedule(rserver, salgorithm, host_name, port) or DIRECT
             verbose(f'{lproto.name} {remote_text}{roption.logtext(host_name, port)}')
             try:
+                # print("This calls the open_connection function", flush=True) #!! test
                 reader_remote, writer_remote = await roption.open_connection(host_name, port, local_addr, lbind)
             except asyncio.TimeoutError:
                 raise Exception(f'Connection timeout {roption.bind}')
@@ -91,10 +102,21 @@ async def stream_handler(reader, writer, unix, lbind, protos, rserver, cipher, s
             except Exception:
                 writer_remote.close()
                 raise Exception('Unknown remote protocol')
+            
+            #!! This is where the packet details can be read--- test
+            # print("HMNNN..", flush=True) #!! test
+            # if random.random():
+            #     request_body = await reader.read()  # Adjust the size as needed #!! test
+            #     # request_body = None# Adjust the size as needed #!! test
+            #     print(f'Request Body: {request_body}', flush=True) #!! test
             m = modstat(user, remote_ip, host_name)
             lchannel = lproto.http_channel if use_http else lproto.channel
             asyncio.ensure_future(lproto.channel(reader_remote, writer, m(2+roption.direct), m(4+roption.direct)))
             asyncio.ensure_future(lchannel(reader, writer_remote, m(roption.direct), roption.connection_change))
+
+
+
+
     except Exception as ex:
         if not isinstance(ex, asyncio.TimeoutError) and not str(ex).startswith('Connection closed'):
             verbose(f'{str(ex) or "Unsupported protocol"} from {remote_ip}')
@@ -170,8 +192,10 @@ class ProxyDirect(object):
     def connection_change(self, delta):
         self.connections += delta
     def udp_packet_unpack(self, data):
+        print('udp_packet_unpack direct', data, flush=True)
         return data
     def destination(self, host, port):
+        print('destination direct', host, port, flush=True) #!! test
         return host, port
     async def udp_open_connection(self, host, port, data, addr, reply):
         class Protocol(asyncio.DatagramProtocol):
@@ -215,6 +239,10 @@ class ProxyDirect(object):
     def wait_open_connection(self, host, port, local_addr, family):
         return asyncio.open_connection(host=host, port=port, local_addr=local_addr, family=family)
     async def open_connection(self, host, port, local_addr, lbind, timeout=SOCKET_TIMEOUT):
+        print('open_connection direct', host, port, local_addr, lbind, timeout, flush=True) #!! test
+        if "googlevideo.com" in host:#!! test
+            print("XXX--BLOCKED--XXX", flush=True)#!! test
+            raise Exception('BLOCKED')#!! test
         try:
             local_addr = local_addr if self.lbind == 'in' else (self.lbind, 0) if self.lbind else \
                          local_addr if lbind == 'in' else (lbind, 0) if lbind else None
@@ -268,8 +296,10 @@ class ProxySimple(ProxyDirect):
         return self.users[0] if self.users else b''
     def udp_packet_unpack(self, data):
         data = self.cipher.datagram.decrypt(data) if self.cipher else data
+        print('udp_packet_unpack', data, flush=True) #!! test
         return self.jump.udp_packet_unpack(self.rproto.udp_unpack(data))
     def destination(self, host, port):
+        print('destination', host, port, flush=True) #!! test
         return self.host_name, self.port
     def udp_prepare_connection(self, host, port, data):
         data = self.jump.udp_prepare_connection(host, port, data)
@@ -892,6 +922,7 @@ def print_server_started(option, server, print_fn):
         print_fn(option, bind)
 
 def main(args = None):
+    print("in main", flush=True)
     parser = argparse.ArgumentParser(description=__description__+'\nSupported protocols: http,socks4,socks5,shadowsocks,shadowsocksr,redirect,pf,tunnel', epilog=f'Online help: <{__url__}>')
     parser.add_argument('-l', dest='listen', default=[], action='append', type=proxies_by_uri, help='tcp server uri (default: http+socks4+socks5://:8080/)')
     parser.add_argument('-r', dest='rserver', default=[], action='append', type=proxies_by_uri, help='tcp remote server uri (default: direct)')
